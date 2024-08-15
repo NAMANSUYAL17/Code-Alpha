@@ -1,0 +1,106 @@
+import yfinance as yf
+import pandas as pd
+
+class StockPortfolio:
+    def __init__(self):  # Corrected the constructor method
+        self.portfolio = {}
+
+    def add_stock(self, ticker, shares, purchase_price):
+        if ticker in self.portfolio:
+            print(f"{ticker} already exists in the portfolio. Use update_stock to modify.")
+        else:
+            self.portfolio[ticker] = {'shares': shares, 'purchase_price': purchase_price}
+            print(f"Added {shares} shares of {ticker} at ${purchase_price:.2f} per share.")
+
+    def remove_stock(self, ticker):
+        if ticker in self.portfolio:
+            del self.portfolio[ticker]
+            print(f"Removed {ticker} from the portfolio.")
+        else:
+            print(f"{ticker} is not in the portfolio.")
+
+    def update_stock(self, ticker, shares=None, purchase_price=None):
+        if ticker in self.portfolio:
+            if shares is not None:
+                self.portfolio[ticker]['shares'] = shares
+            if purchase_price is not None:
+                self.portfolio[ticker]['purchase_price'] = purchase_price
+            print(f"Updated {ticker} in the portfolio.")
+        else:
+            print(f"{ticker} is not in the portfolio. Use add_stock to add it.")
+
+    def get_current_prices(self):
+        tickers = list(self.portfolio.keys())
+        data = yf.download(tickers, period="1d")['Close']
+        
+        if len(tickers) == 1:
+            return data.iloc[-1]
+        else:
+            return data.iloc[-1]
+
+    def calculate_performance(self):
+        current_prices = self.get_current_prices()
+        performance = []
+
+        for ticker, details in self.portfolio.items():
+            shares = details['shares']
+            purchase_price = details['purchase_price']
+            current_price = current_prices[ticker] if isinstance(current_prices, pd.Series) else current_prices[ticker]
+            
+            initial_value = shares * purchase_price
+            current_value = shares * current_price
+            profit_loss = current_value - initial_value
+            percent_change = (current_price - purchase_price) / purchase_price * 100
+
+            performance.append({
+                'Ticker': ticker,
+                'Shares': shares,
+                'Purchase Price': purchase_price,
+                'Current Price': current_price,
+                'Initial Value': initial_value,
+                'Current Value': current_value,
+                'Profit/Loss': profit_loss,
+                'Percent Change': percent_change
+            })
+
+        return pd.DataFrame(performance)
+
+    def display_portfolio(self):
+        if not self.portfolio:
+            print("The portfolio is empty.")
+            return
+
+        performance_df = self.calculate_performance()
+        pd.set_option('display.float_format', '{:.2f}'.format)
+        print(performance_df.to_string(index=False))
+        
+        total_initial_value = performance_df['Initial Value'].sum()
+        total_current_value = performance_df['Current Value'].sum()
+        total_profit_loss = performance_df['Profit/Loss'].sum()
+        total_percent_change = (total_current_value - total_initial_value) / total_initial_value * 100
+
+        print(f"\nTotal Portfolio Value: ${total_current_value:.2f}")
+        print(f"Total Profit/Loss: ${total_profit_loss:.2f}")
+        print(f"Total Percent Change: {total_percent_change:.2f}%")
+
+# Example usage
+portfolio = StockPortfolio()
+
+# Add some stocks
+portfolio.add_stock("AAPL", 10, 150.00)
+portfolio.add_stock("GOOGL", 5, 2500.00)
+portfolio.add_stock("MSFT", 15, 300.00)
+
+# Display the portfolio
+print("\nInitial Portfolio:")
+portfolio.display_portfolio()
+
+# Update a stock
+portfolio.update_stock("AAPL", shares=15)
+
+# Remove a stock
+portfolio.remove_stock("GOOGL")
+
+# Display the updated portfolio
+print("\nUpdated Portfolio:")
+portfolio.display_portfolio()
