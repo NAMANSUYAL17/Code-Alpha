@@ -1,0 +1,44 @@
+import nltk
+import random
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+
+# Download necessary NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+
+# Define some patterns and responses
+patterns = {
+    r'hi|hello|hey': ['Hello!', 'Hi there!', 'Hey!'],
+    r'how are you': ['I am doing well, thanks!', 'I am fine, how about you?'],
+    r'what is your name': ['My name is ChatBot.', 'I am ChatBot, nice to meet you!'],
+    r'bye|goodbye': ['Goodbye!', 'See you later!', 'Bye!'],
+    r'thanks|thank you': ['You\'re welcome!', 'No problem!', 'My pleasure!'],
+}
+
+# Function to preprocess user input
+def preprocess(text):
+    # Tokenize and convert to lowercase
+    tokens = word_tokenize(text.lower())
+    # Remove stopwords
+    stop_words = set(stopwords.words('english'))
+    tokens = [token for token in tokens if token not in stop_words]
+    return ' '.join(tokens)
+
+# Function to get response based on user input
+def get_response(user_input):
+    processed_input = preprocess(user_input)
+    for pattern, responses in patterns.items():
+        if any(word in processed_input for word in pattern.split('|')):
+            return random.choice(responses)
+    return "I'm not sure how to respond to that."
+
+# Main chat loop
+print("ChatBot: Hello! I'm a simple chatbot. Type 'bye' to exit.")
+while True:
+    user_input = input("You: ")
+    if user_input.lower() == 'bye':
+        print("ChatBot: Goodbye!")
+        break
+    response = get_response(user_input)
+    print("ChatBot:", response)
